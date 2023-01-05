@@ -8,7 +8,7 @@ datasource db {
 }
 
 model conta {
-  codigo       Int         @default(autoincrement())
+  codigo       Int         @id(map: "pk_cn") @default(autoincrement())
   nome         String      @db.VarChar(200)
   cpf_cnpj     String      @db.VarChar(14)
   nome_usuario String      @db.VarChar(50)
@@ -17,8 +17,6 @@ model conta {
   alterado     DateTime?   @db.Timestamp(6)
   type         Int
   organizacao  organizacao @relation(fields: [cpf_cnpj], references: [cpf_cnpj], onDelete: NoAction, onUpdate: NoAction, map: "fk_cc")
-
-  @@id([codigo, nome_usuario], map: "pk_cn")
 }
 
 model organizacao {

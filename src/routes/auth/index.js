@@ -101,8 +101,6 @@ route.post("/api/v1/signup", async (req, res) => {
 route.post("/api/v1/signin", async (req, res) => {
   const { cpf_cnpj, nome_usuario, senha } = req.body;
 
-  console.log(req.body);
-
   if (!cpf_cnpj || !nome_usuario || !senha) {
     return res.status(400).send("Solicitação Incorreta");
   }
