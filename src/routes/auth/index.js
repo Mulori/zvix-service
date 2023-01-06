@@ -19,7 +19,7 @@ route.post("/api/v1/signup", async (req, res) => {
     req.body;
 
   var now = new Date();
-  now.setHours(now.getHours() - 3);
+  //now.setHours(now.getHours() - 3);
 
   if (!cpfCnpj || !nomeOrganizacao || !nomeCompleto || !nomeUsuario || !senha)
     return res.status(400).send("Solicitação incorreta.");
