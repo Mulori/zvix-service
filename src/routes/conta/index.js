@@ -45,6 +45,9 @@ route.put("/api/v1/conta/:id/atualizarinformacao", async (req, res) => {
   const { id } = req.params;
   const { nomeCompleto, nomeUsuario } = req.body;
 
+  var now = new Date();
+  //now.setHours(now.getHours() - 3);
+
   if (!id) {
     return res.status(400).send("Nenhum ID informado.");
   }
@@ -79,6 +82,7 @@ route.put("/api/v1/conta/:id/atualizarinformacao", async (req, res) => {
       data: {
         nome: nomeCompleto,
         nome_usuario: nomeUsuario,
+        alterado: now,
       },
     })
     .then(() => {
@@ -97,6 +101,9 @@ route.put("/api/v1/conta/:id/atualizarinformacao", async (req, res) => {
 route.put("/api/v1/conta/:id/atualizarsenha", async (req, res) => {
   const { id } = req.params;
   const { senhaAntiga, senhaNova, confirmacaoSenhaNova } = req.body;
+
+  var now = new Date();
+  //now.setHours(now.getHours() - 3);
 
   if (!id) {
     return res.status(400).send("Nenhum ID informado.");
@@ -135,7 +142,7 @@ route.put("/api/v1/conta/:id/atualizarsenha", async (req, res) => {
   await prisma.conta
     .update({
       where: { codigo: parseInt(id) },
-      data: { chave: md5(senhaNova) },
+      data: { chave: md5(senhaNova), alterado: now },
     })
     .then(() => {
       return res.status(200).send("A senha foi alterada com sucesso!");
