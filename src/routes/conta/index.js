@@ -4,6 +4,7 @@ const prisma = new PrismaClient();
 const md5 = require("md5");
 const jwt = require("jsonwebtoken");
 const middleware = require("../../middlewares/auth");
+const validator = require("email-validator");
 
 route.use(middleware);
 
@@ -23,11 +24,11 @@ route.get("/api/v1/conta/:id", async (req, res) => {
       select: {
         codigo: true,
         nome: true,
-        cpf_cnpj: true,
+        sobrenome: true,
+        email: true,
         nome_usuario: true,
         cadastrado: true,
         alterado: true,
-        type: true,
       },
       where: {
         codigo: parseInt(id),
@@ -43,27 +44,39 @@ route.get("/api/v1/conta/:id", async (req, res) => {
 
 route.put("/api/v1/conta/:id/atualizarinformacao", async (req, res) => {
   const { id } = req.params;
-  const { nomeCompleto, nomeUsuario } = req.body;
+  const { nome, sobrenome, email, nomeUsuario } = req.body;
 
   var now = new Date();
-  //now.setHours(now.getHours() - 3);
+  now.setHours(now.getHours() - 3);
 
   if (!id) {
     return res.status(400).send("Nenhum ID informado.");
   }
 
-  if (!nomeCompleto || !nomeUsuario) {
+  if (!nome || !sobrenome || !email || !nomeUsuario) {
     return res.status(400).send("Solicitação Incorreta.");
   }
 
+  if (!validator.validate(email.trim())) {
+    return res.status(400).send("O e-mail informado é invalido.");
+  }
+
   const ret_nome_usuario = await prisma.conta.findFirst({
-    where: { NOT: { codigo: parseInt(id) }, nome_usuario: nomeUsuario },
+    where: { NOT: { codigo: parseInt(id) }, nome_usuario: nomeUsuario.trim() },
   });
 
   if (ret_nome_usuario) {
     return res
       .status(401)
       .send("Já existe uma conta com este nome de usuário.");
+  }
+
+  const ret_email = await prisma.conta.findFirst({
+    where: { NOT: { codigo: parseInt(id) }, email: email.trim() },
+  });
+
+  if (ret_email) {
+    return res.status(401).send("Já existe uma conta com este e-mail.");
   }
 
   const user_conta = await prisma.conta.findFirst({
@@ -80,8 +93,10 @@ route.put("/api/v1/conta/:id/atualizarinformacao", async (req, res) => {
         codigo: parseInt(id),
       },
       data: {
-        nome: nomeCompleto,
-        nome_usuario: nomeUsuario,
+        nome: nome.trim(),
+        sobrenome: sobrenome.trim(),
+        email: email.trim(),
+        nome_usuario: nomeUsuario.trim(),
         alterado: now,
       },
     })
@@ -103,7 +118,7 @@ route.put("/api/v1/conta/:id/atualizarsenha", async (req, res) => {
   const { senhaAntiga, senhaNova, confirmacaoSenhaNova } = req.body;
 
   var now = new Date();
-  //now.setHours(now.getHours() - 3);
+  now.setHours(now.getHours() - 3);
 
   if (!id) {
     return res.status(400).send("Nenhum ID informado.");

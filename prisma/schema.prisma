@@ -8,20 +8,12 @@ datasource db {
 }
 
 model conta {
-  codigo       Int         @id(map: "pk_cn") @default(autoincrement())
-  nome         String      @db.VarChar(200)
-  cpf_cnpj     String      @db.VarChar(14)
-  nome_usuario String      @db.VarChar(50)
-  chave        String      @db.VarChar(1500)
-  cadastrado   DateTime?   @db.Timestamp(6)
-  alterado     DateTime?   @db.Timestamp(6)
-  type         Int
-  organizacao  organizacao @relation(fields: [cpf_cnpj], references: [cpf_cnpj], onDelete: NoAction, onUpdate: NoAction, map: "fk_cc")
-}
-
-model organizacao {
-  codigo   Int     @default(autoincrement())
-  cpf_cnpj String  @id @db.VarChar(14)
-  nome     String  @db.VarChar(150)
-  conta    conta[]
+  codigo       Int       @id(map: "pk_cn") @default(autoincrement())
+  nome         String    @db.VarChar(80)
+  sobrenome    String    @db.VarChar(80)
+  email        String    @db.VarChar(200)
+  nome_usuario String    @db.VarChar(50)
+  chave        String    @db.VarChar(1500)
+  cadastrado   DateTime? @db.Timestamp(6)
+  alterado     DateTime? @db.Timestamp(6)
 }
