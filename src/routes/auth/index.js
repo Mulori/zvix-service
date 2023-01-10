@@ -7,6 +7,7 @@ const authConfig = require("../../config/auth");
 const validated = require("../../middlewares/validCpfCnpj");
 const removeFormatacao = require("../../middlewares/removerFormatacao");
 const mid = require("../../middlewares/mid");
+const validator = require("email-validator");
 
 function GenerateToken(param = {}) {
   return jwt.sign({ param }, authConfig.secret, {
@@ -15,31 +16,36 @@ function GenerateToken(param = {}) {
 }
 
 route.post("/api/v1/signup", async (req, res) => {
-  const { cpfCnpj, nomeOrganizacao, nomeCompleto, nomeUsuario, senha } =
-    req.body;
+  const { nome, sobrenome, email, nomeUsuario, senha } = req.body;
 
   var now = new Date();
-  //now.setHours(now.getHours() - 3);
+  now.setHours(now.getHours() - 3);
 
-  if (!cpfCnpj || !nomeOrganizacao || !nomeCompleto || !nomeUsuario || !senha)
+  if (!nome || !sobrenome || !email || !nomeUsuario || !senha)
     return res.status(400).send("Solicitação incorreta.");
 
-  if (!validated(cpfCnpj)) {
-    return res.status(401).send("CPF ou CNPJ não é válido.");
+  if (!validator.validate(email)) {
+    return res.status(401).send("O e-mail informado não é valido.");
   }
 
   if (senha.length < 6) {
     return res.status(401).send("A senha deve conter no minimo 6 caracteres.");
   }
 
-  const org = await prisma.organizacao.findFirst({
+  if (nomeUsuario.length < 6) {
+    return res
+      .status(401)
+      .send("O nome de usuário deve conter no minimo 6 caracteres.");
+  }
+
+  const conta_email = await prisma.conta.findFirst({
     where: {
-      cpf_cnpj: removeFormatacao(cpfCnpj),
+      email: email,
     },
   });
 
-  if (org) {
-    return res.status(401).send("CPF ou CNPJ já está cadastrado.");
+  if (conta_email) {
+    return res.status(401).send("O e-mail informado já está em uso.");
   }
 
   const conta = await prisma.conta.findFirst({
@@ -49,46 +55,31 @@ route.post("/api/v1/signup", async (req, res) => {
   });
 
   if (conta) {
-    return res.status(401).send("Nome de usuário já está em uso");
+    return res.status(401).send("O nome de usuário já está em uso.");
   }
 
-  await prisma.organizacao
+  await prisma.conta
     .create({
       data: {
-        cpf_cnpj: removeFormatacao(cpfCnpj),
-        nome: mid(nomeOrganizacao, 150),
+        nome: mid(nome, 80),
+        sobrenome: mid(sobrenome, 80),
+        email: mid(email, 200),
+        nome_usuario: mid(nomeUsuario, 50),
+        chave: md5(senha),
+        cadastrado: now,
+        alterado: now,
       },
     })
-    .then(async (e_org) => {
-      await prisma.conta
-        .create({
-          data: {
-            nome: mid(nomeCompleto, 200),
-            cpf_cnpj: e_org.cpf_cnpj,
-            nome_usuario: mid(nomeUsuario, 50),
-            chave: md5(senha),
-            type: 1,
-            cadastrado: now,
-            alterado: now,
-          },
-        })
-        .then((e) => {
-          return res.status(200).send({
-            codigo: e.codigo,
-            cpf_cnpj: e.cpf_cnpj,
-            nome: e.nome,
-            nome_usuario: e.nome_usuario,
-            cadastrado: e.cadastrado,
-            tipo: e.type,
-            token: GenerateToken({ id: e.id, cpf_cnpj: e.cpf_cnpj }),
-          });
-        })
-        .catch((e) => {
-          console.log(e);
-          return res
-            .status(500)
-            .send("Ocorreu um problema ao incluir a nova conta.");
-        });
+    .then((e) => {
+      return res.status(200).send({
+        codigo: e.codigo,
+        nome: e.nome,
+        sobrenome: e.sobrenome,
+        email: e.email,
+        nome_usuario: e.nome_usuario,
+        cadastrado: e.cadastrado,
+        token: GenerateToken({ id: e.id, email: e.email }),
+      });
     })
     .catch((e) => {
       console.log(e);
@@ -99,39 +90,42 @@ route.post("/api/v1/signup", async (req, res) => {
 });
 
 route.post("/api/v1/signin", async (req, res) => {
-  const { cpf_cnpj, nome_usuario, senha } = req.body;
+  const { email, senha } = req.body;
 
-  if (!cpf_cnpj || !nome_usuario || !senha) {
-    return res.status(400).send("Solicitação Incorreta");
+  if (!email) {
+    return res.status(400).send("Informe o e-mail.");
+  }
+
+  if (!validator.validate(email)) {
+    return res.status(401).send("O e-mail informado não é valido.");
+  }
+
+  if (!senha) {
+    return res.status(400).send("Informe a senha.");
   }
 
   const conta = await prisma.conta.findFirst({
     select: {
       codigo: true,
       nome: true,
+      sobrenome: true,
+      email: true,
       nome_usuario: true,
       cadastrado: true,
-      alterado: true,
-      type: true,
     },
     where: {
-      cpf_cnpj: cpf_cnpj,
-      nome_usuario: nome_usuario,
-      chave: senha,
+      email: email.trim(),
+      chave: md5(senha),
     },
   });
 
   if (!conta) {
-    return res
-      .status(400)
-      .send(
-        "Usuário não encontrado. Verifique as credenciais e tente novamente."
-      );
+    return res.status(400).send("E-mail e/ou senha incorretos.");
   }
 
   return res.status(200).send({
     conta: conta,
-    token: GenerateToken({ id: conta.id, cpf_cnpj: conta.cpf_cnpj }),
+    token: GenerateToken({ id: conta.id, email: conta.email }),
   });
 });
 
