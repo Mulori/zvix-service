@@ -10,9 +10,7 @@ const mid = require("../../middlewares/mid");
 const validator = require("email-validator");
 
 function GenerateToken(param = {}) {
-  return jwt.sign({ param }, authConfig.secret, {
-    expiresIn: 86400,
-  });
+  return jwt.sign({ param }, authConfig.secret);
 }
 
 route.post("/api/v1/signup", async (req, res) => {

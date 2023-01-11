@@ -8,12 +8,31 @@ datasource db {
 }
 
 model conta {
-  codigo       Int       @id(map: "pk_cn") @default(autoincrement())
-  nome         String    @db.VarChar(80)
-  sobrenome    String    @db.VarChar(80)
-  email        String    @db.VarChar(200)
-  nome_usuario String    @db.VarChar(50)
-  chave        String    @db.VarChar(1500)
-  cadastrado   DateTime? @db.Timestamp(6)
-  alterado     DateTime? @db.Timestamp(6)
+  codigo       Int           @id(map: "pk_cn") @default(autoincrement())
+  nome         String        @db.VarChar(80)
+  sobrenome    String        @db.VarChar(80)
+  email        String        @db.VarChar(200)
+  nome_usuario String        @db.VarChar(50)
+  chave        String        @db.VarChar(1500)
+  cadastrado   DateTime?     @db.Timestamp(6)
+  alterado     DateTime?     @db.Timestamp(6)
+  organizacao  organizacao[]
+}
+
+model organizacao {
+  codigo               Int           @id @default(autoincrement())
+  conta_codigo         Int
+  nome                 String        @db.VarChar(100)
+  codigo_tipo_controle Int
+  cadastrado           DateTime      @db.Timestamp(6)
+  alterado             DateTime      @db.Timestamp(6)
+  conta                conta         @relation(fields: [conta_codigo], references: [codigo], onDelete: NoAction, onUpdate: NoAction, map: "fk_conta_codigo")
+  tipo_controle        tipo_controle @relation(fields: [codigo_tipo_controle], references: [codigo], onDelete: NoAction, onUpdate: NoAction, map: "fk_tipo_controle")
+}
+
+model tipo_controle {
+  codigo      Int           @id @default(autoincrement())
+  nome        String        @db.VarChar(50)
+  cadastrado  DateTime      @db.Timestamp(6)
+  organizacao organizacao[]
 }
