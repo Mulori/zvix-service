@@ -1,6 +1,8 @@
 const express = require("express");
 const auth = require("./routes/auth");
 const conta = require("./routes/conta");
+const organizacao = require("./routes/organizacao");
+const controle = require("./routes/controle");
 var cors = require("cors");
 
 const app = express();
@@ -26,5 +28,7 @@ app.use((req, res, next) => {
 app.use(express.json());
 app.use(auth);
 app.use(conta);
+app.use(organizacao);
+app.use(controle);
 
 app.listen(7412, () => console.log("O Serviço ZVIX está em execução..."));
