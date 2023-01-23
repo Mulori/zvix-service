@@ -31,4 +31,6 @@ app.use(conta);
 app.use(organizacao);
 app.use(controle);
 
-app.listen(7412, () => console.log("O Serviço ZVIX está em execução..."));
+app.listen(process.env.PORT || 3456, () =>
+  console.log("O Serviço ZVIX está em execução...")
+);
